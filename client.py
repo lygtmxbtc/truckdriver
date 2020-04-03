@@ -103,7 +103,7 @@ def terminate():
     sys.exit()
 
 def main():
-    global FPSCLOCK, DISPLAYSURF, IMAGESDICT, TILEMAPPING, BASICFONT, PLAYERIMAGES, currentImage
+    global FPSCLOCK, DISPLAYSURF, IMAGESDICT, ROLEMAPPING, BASICFONT
 
     # Pygame initialization and basic set up of the global variables.
     pygame.init()
@@ -117,7 +117,20 @@ def main():
     # A global dict value that will contain all the Pygame
     # Surface objects returned by pygame.image.load().
     IMAGESDICT = {'start interface': pygame.image.load('pic/StartInterface.jpeg'),
+                  'princess': pygame.image.load('pic/princess.png'),
+                  'boy': pygame.image.load('pic/boy.png'),
+                  'catgirl': pygame.image.load('pic/catgirl.png'),
+                  'horngirl': pygame.image.load('pic/horngirl.png'),
+                  'pinkgirl': pygame.image.load('pic/pinkgirl.png'),
+                  'rock': pygame.image.load('pic/Rock.png'),
+                  'city': pygame.image.load('pic/Wall_Block_Tall.png'),
+                  'park': pygame.image.load('pic/Plain_Block.png'),
                   }
+
+    ROLEMAPPING = {'1': IMAGESDICT['princess'],
+                  '2': IMAGESDICT['boy'],
+                  '3': IMAGESDICT['catgirl'],
+                  '4': IMAGESDICT['horngirl']}
 
     # These dict values are global, and map the character that appears
     # in the level file to the Surface object it represents.
@@ -140,26 +153,58 @@ def main():
     # server_socket = create_connect()  # 与服务器建立连接
 
     # 载入地图
-    maps = readMapFile('maps.txt')
+    maps = [['#', '#', '#', '#', '#', '#'],
+            ['#', ' ', '#', ' ', '#', ' '],
+            ['#', '#', '1', '2', '#', '#'],
+            ['#', ' ', '3', '4', '#', ' '],
+            ['#', '#', '#', '#', '#', '#'],
+            ['#', ' ', '#', ' ', '#', ' '],]
 
     # 游戏开始
+    # 生成本局地图
+    mapSurf = generate_game_surface(maps)
     while True:  # main game loop
-        result = runLevel(levels, currentLevelIndex)
+        for event in pygame.event.get(): # event handling loop
+            if event.type == QUIT:
+                # Player clicked the "X" at the corner of the window.
+                terminate()
+            elif event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    terminate() # Esc key quits.
+            elif event.type == MOUSEBUTTONDOWN:
+                pass
+            elif event.type == MOUSEBUTTONUP:
+                pass
+            elif event.type == MOUSEMOTION:
+                pass
+        DISPLAYSURF.fill(BGCOLOR)
+        mapSurfRect = mapSurf.get_rect()
+        # 将游戏地图中心坐标设为窗口中心
+        mapSurfRect.center = (HALF_WINWIDTH, HALF_WINHEIGHT)
 
-        if result in ('solved', 'next'):
-            # Go to the next level.
-            currentLevelIndex += 1
-            if currentLevelIndex >= len(levels):
-                # If there are no more levels, go back to the first one.
-                currentLevelIndex = 0
-        elif result == 'back':
-            # Go to the previous level.
-            currentLevelIndex -= 1
-            if currentLevelIndex < 0:
-                # If there are no previous levels, go to the last one.
-                currentLevelIndex = len(levels) - 1
-        elif result == 'reset':
-            pass  # Do nothing. Loop re-calls runLevel() to reset the level
+        # Draw mapSurf to the DISPLAYSURF Surface object.
+        DISPLAYSURF.blit(mapSurf, mapSurfRect)
+
+        pygame.display.update()  # draw DISPLAYSURF to the screen.
+        FPSCLOCK.tick()
+
+def generate_game_surface(map):
+    mapSurfWidth = len(map) * TILEWIDTH
+    mapSurfHeight = (len(map[0]) - 1) * TILEFLOORHEIGHT + TILEHEIGHT
+    mapSurf = pygame.Surface((mapSurfWidth, mapSurfHeight))
+    mapSurf.fill(BGCOLOR)
+
+    for x in range(len(map)):
+        for y in range(len(map[x])):
+            spaceRect = pygame.Rect((x * TILEWIDTH, y * TILEFLOORHEIGHT, TILEWIDTH, TILEHEIGHT))
+            if map[x][y] == '#':
+                obj = IMAGESDICT['rock']
+            elif map[x][y] == ' ':
+                obj = IMAGESDICT['park']
+            elif map[x][y] in ['1', '2', '3', '4']:
+                obj = ROLEMAPPING[map[x][y]]
+            mapSurf.blit(obj, spaceRect)
+    return mapSurf
 
 if __name__ == '__main__':
     main()
