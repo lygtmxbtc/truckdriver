@@ -21,28 +21,27 @@ class PlaceCard:
         self.name = init_data['name']
         self.park_truck = None
         self.init_item = init_data['init_item']    # 'pig'
-        self.sale_item1 = init_data['sale_item1']  # ('pig', 4)
-        self.sale_item2 = init_data['sale_item2']  # ('pea', 2)
-        self.item_pool = {self.init_item: 5,
-                          self.sale_item1[0]: 0,
-                          self.sale_item2[0]: 0}
+        self.sale_item = init_data['sale_item']    # {'pig': 4, 'pea':4}
+        self.item_pool = self.get_item_pool()
+        self.item_pool_amount = 5
+
+    def get_item_pool(self):
+        item_pool = {x: 0 for x in self.sale_item}
+        item_pool[self.init_item] = 5
+        return item_pool
 
     def check_sale_item(self, items):
         for item in items:
-            if item not in [self.sale_item1[0], self.sale_item2[0]]:
+            if item not in self.sale_item:
                 return (False, '本站不收购%s' % item)
-        if len(items) + self.item_pool[self.init_item] \
-                + self.item_pool[self.sale_item1[0]] \
-                + self.item_pool[self.sale_item2[0]] > 8:
+        if len(items) + self.item_pool_amount > 8:
             return (False, '卖出将超出本站库存上限')
         return (True, '')
 
     def check_buy_item(self, items):
-        buy_dict = {self.sale_item1[0]: 0,
-                    self.sale_item2[0]: 0,
-                    self.init_item: 0,}
+        buy_dict = {x: 0 for x in self.item_pool}
         for item in items:
-            if item not in [self.sale_item1[0], self.sale_item2[0], self.init_item]:
+            if item not in self.item_pool:
                 return (False, '本站不出售%s' % item)
             else:
                 if buy_dict[item] >= self.item_pool[item]:
@@ -51,7 +50,22 @@ class PlaceCard:
         return (True, '')
 
     def sale_item(self, items):
-        res, mgs = self.check_sale_item(items)
+        res, msg = self.check_sale_item(items)
         if res:
-            pass
+            coin = 0
+            for item in items:
+                self.item_pool[item] += 1
+                self.item_pool_amount += 1
+                coin += self.sale_item[item]
+            return res, coin
+        else:
+            return res, msg
+
+    def buy_item(self, items):
+        res, msg = self.check_buy_item(items)
+        if res:
+            for item in items:
+                pass
+
+
 
