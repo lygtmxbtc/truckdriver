@@ -31,41 +31,85 @@ class PlaceCard:
         return item_pool
 
     def check_sale_item(self, items):
-        for item in items:
-            if item not in self.sale_item:
-                return (False, '本站不收购%s' % item)
-        if len(items) + self.item_pool_amount > 8:
+        # param: ('pea': 2):
+        if items[0] not in self.sale_item:
+            return (False, '本站不收购%s' % items[0])
+        if items[1] + self.item_pool_amount > 8:
             return (False, '卖出将超出本站库存上限')
         return (True, '')
 
     def check_buy_item(self, items):
-        buy_dict = {x: 0 for x in self.item_pool}
-        for item in items:
-            if item not in self.item_pool:
-                return (False, '本站不出售%s' % item)
-            else:
-                if buy_dict[item] >= self.item_pool[item]:
-                    return (False, '本站商品%s数量不足' % item)
-                buy_dict[item] += 1
+        # 规则 买回本站收购的商品时 需要2个对应商品订单
+        # param: ('pea': 2):
+        if items[0] not in self.item_pool:
+            return (False, '本站不出售%s' % items[0])
+        if items[0] in self.sale_item:
+            if items[1] % 2 != 0:
+                return (False, '买回本站收购的商品时 需要2个对应商品订单')
+            if items[1] // 2 > self.item_pool[items[0]]:
+                return (False, '商品%s数量不足' % items[0])
+        else:
+            if items[1] > self.item_pool[items[0]]:
+                return (False, '商品%s数量不足' % items[0])
         return (True, '')
 
     def sale_item(self, items):
+        # 货车使用订单卖出货物 赚取金币
         res, msg = self.check_sale_item(items)
         if res:
             coin = 0
-            for item in items:
-                self.item_pool[item] += 1
-                self.item_pool_amount += 1
-                coin += self.sale_item[item]
+            self.item_pool[items[0]] += items[1]
+            self.item_pool_amount += items[1]
+            coin += self.sale_item[items[0]]
             return res, coin
         else:
             return res, msg
 
     def buy_item(self, items):
+        # 货车使用订单装运货物
         res, msg = self.check_buy_item(items)
         if res:
-            for item in items:
-                pass
+            if items[0] in self.sale_item:
+                self.item_pool[items[0]] -= items[1] // 2
+                self.item_pool_amount -= items[1] // 2
+                return res, (items[0], items[1] // 2)
+            else:
+                self.item_pool[items[0]] -= items[1]
+                self.item_pool_amount -= items[1]
+                return res, items
+        else:
+            return res, msg
+
+
+class Player:
+    def __init__(self, name, color):
+        self.name = name
+        self.color = color
+        self.coin = 5
+        self.card = []
+        self.items = {"pea": 0,
+                      "corn": 0,
+                      "cow": 0,
+                      "pig": 0}
+        self.item_amount = 0
+
+    def use_order_card(self, index_list):
+        pass
+
+    def use_oil_card(self, index_list):
+        pass
+
+    def exchange_card(self, index_list):
+        pass
+
+    def get_card(self):
+        pass
+
+    def load_item(self, items):
+        pass
+
+    def unload_item(self, items):
+        pass
 
 
 
